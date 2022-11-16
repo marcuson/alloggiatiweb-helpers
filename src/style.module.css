@@ -1,0 +1,15 @@
+.code {
+  max-width: 100px;
+}
+
+.error {
+  color: red;
+}
+
+.warning {
+  color: orange;
+}
+
+.success {
+  color: green;
+}
