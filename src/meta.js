@@ -8,6 +8,9 @@
 // @grant       GM.setValue
 // @version     process.env.VERSION
 // @author      process.env.AUTHOR
+// @downloadURL https://marcuson.github.io/alloggiatiweb-helpers/index.user.js
+// @supportURL  https://github.com/marcuson/alloggiatiweb-helpers/issues
+// @homepageURL https://github.com/marcuson/alloggiatiweb-helpers
 // @require     https://cdn.jsdelivr.net/combine/npm/@violentmonkey/dom@2,npm/@violentmonkey/ui@0.7
 // ==/UserScript==
 
