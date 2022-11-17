@@ -1,10 +1,17 @@
 import globalCss from '../style.css';
 import styles, { stylesheet } from '../style.module.css';
 import { IPanelResult } from '@violentmonkey/ui';
-import { getOpts, Options, saveOpts } from './options';
+import { exportOpts, getOpts, importOpts, Options, saveOpts } from './options';
+
+const CODE_ROWS = 4;
+const CODE_COLS = 4;
 
 let panel: IPanelResult = undefined;
 let panelOptions: Options = undefined;
+
+let ocrSpaceApiKeyInput: HTMLInputElement;
+// FIXME: Add init based on rows and cols constants
+const codeInputs: HTMLInputElement[][] = [[], [], [], []];
 
 export async function showOptions() {
   if (panel) {
@@ -13,6 +20,7 @@ export async function showOptions() {
 
   panelOptions = await getOpts();
   if (!panelOptions) {
+    // FIXME: Add init based on rows and cols constants
     panelOptions = {
       codes: [
         ['', '', '', ''],
@@ -24,146 +32,56 @@ export async function showOptions() {
     };
   }
 
+  ocrSpaceApiKeyInput = VM.m(
+    <input
+      type="text"
+      name="ocrspaceapikey"
+      onchange={onOcrSpaceApiKeyChange}
+      value={panelOptions.ocrSpaceApiKey}
+    ></input>
+  ) as HTMLInputElement;
+
+  const codeInputsFlat = [];
+
+  for (let x = 0; x < CODE_COLS; x++) {
+    codeInputsFlat.push(<br></br>);
+
+    for (let y = 0; y < CODE_ROWS; y++) {
+      codeInputs[x][y] = VM.m(
+        <input
+          class={styles.code}
+          type="text"
+          name={`code_${x}_${y}`}
+          onchange={onCodeChange}
+          value={panelOptions.codes[x][y]}
+        ></input>
+      ) as HTMLInputElement;
+      codeInputsFlat.push(codeInputs[x][y]);
+    }
+  }
+
   panel = VM.getPanel({
     content: VM.m(
       <div>
         <form>
           <label for="ocrspaceapikey">OCR space API KEY</label>
-          <input
-            type="text"
-            name="ocrspaceapikey"
-            onchange={onOcrSpaceApiKeyChange}
-            value={panelOptions.ocrSpaceApiKey}
-          ></input>
+          {ocrSpaceApiKeyInput}
           <br />
 
-          <label for="codes">
-            Codes (separated by spaces and carriage returns)
-          </label>
-          <br />
-          <input
-            class={styles.code}
-            type="text"
-            name="code_0_0"
-            onchange={onCodeChange}
-            value={panelOptions.codes[0][0]}
-          ></input>
-          <input
-            class={styles.code}
-            type="text"
-            name="code_0_1"
-            onchange={onCodeChange}
-            value={panelOptions.codes[0][1]}
-          ></input>
-          <input
-            class={styles.code}
-            type="text"
-            name="code_0_2"
-            onchange={onCodeChange}
-            value={panelOptions.codes[0][2]}
-          ></input>
-          <input
-            class={styles.code}
-            type="text"
-            name="code_0_3"
-            onchange={onCodeChange}
-            value={panelOptions.codes[0][3]}
-          ></input>
-          <br />
-          <input
-            class={styles.code}
-            type="text"
-            name="code_1_0"
-            onchange={onCodeChange}
-            value={panelOptions.codes[1][0]}
-          ></input>
-          <input
-            class={styles.code}
-            type="text"
-            name="code_1_1"
-            onchange={onCodeChange}
-            value={panelOptions.codes[1][1]}
-          ></input>
-
-          <input
-            class={styles.code}
-            type="text"
-            name="code_1_2"
-            onchange={onCodeChange}
-            value={panelOptions.codes[1][2]}
-          ></input>
-          <input
-            class={styles.code}
-            type="text"
-            name="code_1_3"
-            onchange={onCodeChange}
-            value={panelOptions.codes[1][3]}
-          ></input>
-          <br />
-          <input
-            class={styles.code}
-            type="text"
-            name="code_2_0"
-            onchange={onCodeChange}
-            value={panelOptions.codes[2][0]}
-          ></input>
-          <input
-            class={styles.code}
-            type="text"
-            name="code_2_1"
-            onchange={onCodeChange}
-            value={panelOptions.codes[2][1]}
-          ></input>
-          <input
-            class={styles.code}
-            type="text"
-            name="code_2_2"
-            onchange={onCodeChange}
-            value={panelOptions.codes[2][2]}
-          ></input>
-          <input
-            class={styles.code}
-            type="text"
-            name="code_2_3"
-            onchange={onCodeChange}
-            value={panelOptions.codes[2][3]}
-          ></input>
-          <br />
-          <input
-            class={styles.code}
-            type="text"
-            name="code_3_0"
-            onchange={onCodeChange}
-            value={panelOptions.codes[3][0]}
-          ></input>
-          <input
-            class={styles.code}
-            type="text"
-            name="code_3_1"
-            onchange={onCodeChange}
-            value={panelOptions.codes[3][1]}
-          ></input>
-          <input
-            class={styles.code}
-            type="text"
-            name="code_3_2"
-            onchange={onCodeChange}
-            value={panelOptions.codes[3][2]}
-          ></input>
-          <input
-            class={styles.code}
-            type="text"
-            name="code_3_3"
-            onchange={onCodeChange}
-            value={panelOptions.codes[3][3]}
-          ></input>
+          <label for="codes">Codes</label>
+          {codeInputsFlat}
         </form>
         <button onclick={onSaveBtnClick}>Save</button>
         <button onclick={onCancelBtnClick}>Cancel</button>
+        <hr></hr>
+        <button onclick={onExportBtnClick}>Export</button>
+        <button onclick={onImportBtnClick}>Import</button>
       </div>
     ),
     style: [globalCss, stylesheet].join('\n'),
   });
+
+  writeOptionsIntoInputs();
 
   panel.wrapper.style.top = '100px';
   panel.wrapper.style.left = '100px';
@@ -182,6 +100,25 @@ function onCodeChange(e: Event) {
   const x = inp.name.substring('code_'.length, 'code_'.length + 1);
   const y = inp.name.substring('code_X_'.length, 'code_X_'.length + 1);
   panelOptions.codes[x][y] = inp.value;
+}
+
+function onExportBtnClick(e: Event) {
+  e.preventDefault();
+  exportOpts(panelOptions);
+}
+
+async function onImportBtnClick(e: Event) {
+  e.preventDefault();
+  panelOptions = await importOpts();
+  writeOptionsIntoInputs();
+}
+
+function writeOptionsIntoInputs() {
+  for (let x = 0; x < CODE_COLS; x++) {
+    for (let y = 0; y < CODE_ROWS; y++) {
+      codeInputs[x][y].value = panelOptions.codes[x][y];
+    }
+  }
 }
 
 function onCancelBtnClick(e: Event) {

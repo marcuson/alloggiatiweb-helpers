@@ -3,13 +3,13 @@
 // @namespace   marcuson
 // @description Helpers for Alloggiati Web.
 // @match       https://alloggiatiweb.poliziadistato.it/AlloggiatiWeb/SecurityCODS.aspx
-// @grant       GM_addStyle
+// @grant       GM.addStyle
 // @grant       GM.getValue
 // @grant       GM.setValue
 // @version     process.env.VERSION
 // @author      process.env.AUTHOR
-// @downloadURL https://marcuson.github.io/alloggiatiweb-helpers/index.user.js
 // @license     GPL-3.0-or-later
+// @downloadURL https://github.com/marcuson/alloggiatiweb-helpers/raw/gh-pages/index.user.js
 // @supportURL  https://github.com/marcuson/alloggiatiweb-helpers/issues
 // @homepageURL https://github.com/marcuson/alloggiatiweb-helpers
 // @require     https://cdn.jsdelivr.net/combine/npm/@violentmonkey/dom@2,npm/@violentmonkey/ui@0.7
