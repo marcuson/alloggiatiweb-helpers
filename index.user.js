@@ -4,19 +4,55 @@
 // @namespace   marcuson
 // @description Helpers for Alloggiati Web.
 // @match       https://alloggiatiweb.poliziadistato.it/AlloggiatiWeb/SecurityCODS.aspx
-// @version     1.1.0
+// @version     1.2.0
 // @author      marcuson
-// @downloadURL https://marcuson.github.io/alloggiatiweb-helpers/index.user.js
+// @license     GPL-3.0-or-later
+// @downloadURL https://github.com/marcuson/alloggiatiweb-helpers/raw/gh-pages/index.user.js
 // @supportURL  https://github.com/marcuson/alloggiatiweb-helpers/issues
 // @homepageURL https://github.com/marcuson/alloggiatiweb-helpers
 // @require     https://cdn.jsdelivr.net/combine/npm/@violentmonkey/dom@2,npm/@violentmonkey/ui@0.7
+// @grant       GM.addStyle
 // @grant       GM.getValue
 // @grant       GM.setValue
-// @grant       GM_addStyle
 // ==/UserScript==
 
 (function () {
 'use strict';
+
+function downloadObjectAsJson(exportObj, exportName) {
+  const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(exportObj));
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute('href', dataStr);
+  downloadAnchorNode.setAttribute('download', exportName + '.json');
+  document.body.appendChild(downloadAnchorNode); // required for firefox
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
+async function askFileToRead() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  const prom = new Promise((res, rej) => {
+    input.onchange = () => {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.readAsText(file, 'UTF-8');
+      reader.onload = readerEvent => {
+        const content = readerEvent.target.result;
+        res(content);
+      };
+      reader.onerror = err => {
+        rej(err);
+      };
+    };
+  });
+  input.setAttribute('style', 'display:none;');
+  document.body.appendChild(input); // required for firefox
+  input.click();
+  const res = await prom;
+  input.remove();
+  return res;
+}
 
 async function getOpts() {
   return await GM.getValue('options', undefined);
@@ -24,138 +60,76 @@ async function getOpts() {
 async function saveOpts(opts) {
   await GM.setValue('options', opts);
 }
+function exportOpts(opts) {
+  downloadObjectAsJson(opts, 'alloggiatiweb-options');
+}
+async function importOpts() {
+  const optsStr = await askFileToRead();
+  const opts = JSON.parse(optsStr);
+  return opts;
+}
 
 var css_248z = "";
 
 var styles = {"code":"style-module_code__ds1Ud","error":"style-module_error__ABgWN","warning":"style-module_warning__nASzn","success":"style-module_success__ZG5Xf"};
 var stylesheet=".style-module_code__ds1Ud{max-width:100px}.style-module_error__ABgWN{color:red}.style-module_warning__nASzn{color:orange}.style-module_success__ZG5Xf{color:green}";
 
+const CODE_ROWS = 4;
+const CODE_COLS = 4;
 let panel = undefined;
 let panelOptions = undefined;
+let ocrSpaceApiKeyInput;
+// FIXME: Add init based on rows and cols constants
+const codeInputs = [[], [], [], []];
 async function showOptions() {
   if (panel) {
     return;
   }
   panelOptions = await getOpts();
   if (!panelOptions) {
+    // FIXME: Add init based on rows and cols constants
     panelOptions = {
       codes: [['', '', '', ''], ['', '', '', ''], ['', '', '', ''], ['', '', '', '']],
       ocrSpaceApiKey: ''
     };
   }
+  ocrSpaceApiKeyInput = VM.m(VM.h("input", {
+    type: "text",
+    name: "ocrspaceapikey",
+    onchange: onOcrSpaceApiKeyChange,
+    value: panelOptions.ocrSpaceApiKey
+  }));
+  const codeInputsFlat = [];
+  for (let x = 0; x < CODE_COLS; x++) {
+    codeInputsFlat.push(VM.h("br", null));
+    for (let y = 0; y < CODE_ROWS; y++) {
+      codeInputs[x][y] = VM.m(VM.h("input", {
+        class: styles.code,
+        type: "text",
+        name: `code_${x}_${y}`,
+        onchange: onCodeChange,
+        value: panelOptions.codes[x][y]
+      }));
+      codeInputsFlat.push(codeInputs[x][y]);
+    }
+  }
   panel = VM.getPanel({
     content: VM.m(VM.h("div", null, VM.h("form", null, VM.h("label", {
       for: "ocrspaceapikey"
-    }, "OCR space API KEY"), VM.h("input", {
-      type: "text",
-      name: "ocrspaceapikey",
-      onchange: onOcrSpaceApiKeyChange,
-      value: panelOptions.ocrSpaceApiKey
-    }), VM.h("br", null), VM.h("label", {
+    }, "OCR space API KEY"), ocrSpaceApiKeyInput, VM.h("br", null), VM.h("label", {
       for: "codes"
-    }, "Codes (separated by spaces and carriage returns)"), VM.h("br", null), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_0_0",
-      onchange: onCodeChange,
-      value: panelOptions.codes[0][0]
-    }), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_0_1",
-      onchange: onCodeChange,
-      value: panelOptions.codes[0][1]
-    }), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_0_2",
-      onchange: onCodeChange,
-      value: panelOptions.codes[0][2]
-    }), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_0_3",
-      onchange: onCodeChange,
-      value: panelOptions.codes[0][3]
-    }), VM.h("br", null), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_1_0",
-      onchange: onCodeChange,
-      value: panelOptions.codes[1][0]
-    }), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_1_1",
-      onchange: onCodeChange,
-      value: panelOptions.codes[1][1]
-    }), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_1_2",
-      onchange: onCodeChange,
-      value: panelOptions.codes[1][2]
-    }), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_1_3",
-      onchange: onCodeChange,
-      value: panelOptions.codes[1][3]
-    }), VM.h("br", null), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_2_0",
-      onchange: onCodeChange,
-      value: panelOptions.codes[2][0]
-    }), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_2_1",
-      onchange: onCodeChange,
-      value: panelOptions.codes[2][1]
-    }), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_2_2",
-      onchange: onCodeChange,
-      value: panelOptions.codes[2][2]
-    }), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_2_3",
-      onchange: onCodeChange,
-      value: panelOptions.codes[2][3]
-    }), VM.h("br", null), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_3_0",
-      onchange: onCodeChange,
-      value: panelOptions.codes[3][0]
-    }), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_3_1",
-      onchange: onCodeChange,
-      value: panelOptions.codes[3][1]
-    }), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_3_2",
-      onchange: onCodeChange,
-      value: panelOptions.codes[3][2]
-    }), VM.h("input", {
-      class: styles.code,
-      type: "text",
-      name: "code_3_3",
-      onchange: onCodeChange,
-      value: panelOptions.codes[3][3]
-    })), VM.h("button", {
+    }, "Codes"), codeInputsFlat), VM.h("button", {
       onclick: onSaveBtnClick
     }, "Save"), VM.h("button", {
       onclick: onCancelBtnClick
-    }, "Cancel"))),
+    }, "Cancel"), VM.h("hr", null), VM.h("button", {
+      onclick: onExportBtnClick
+    }, "Export"), VM.h("button", {
+      onclick: onImportBtnClick
+    }, "Import"))),
     style: [css_248z, stylesheet].join('\n')
   });
+  writeOptionsIntoInputs();
   panel.wrapper.style.top = '100px';
   panel.wrapper.style.left = '100px';
   panel.show();
@@ -171,6 +145,22 @@ function onCodeChange(e) {
   const x = inp.name.substring('code_'.length, 'code_'.length + 1);
   const y = inp.name.substring('code_X_'.length, 'code_X_'.length + 1);
   panelOptions.codes[x][y] = inp.value;
+}
+function onExportBtnClick(e) {
+  e.preventDefault();
+  exportOpts(panelOptions);
+}
+async function onImportBtnClick(e) {
+  e.preventDefault();
+  panelOptions = await importOpts();
+  writeOptionsIntoInputs();
+}
+function writeOptionsIntoInputs() {
+  for (let x = 0; x < CODE_COLS; x++) {
+    for (let y = 0; y < CODE_ROWS; y++) {
+      codeInputs[x][y].value = panelOptions.codes[x][y];
+    }
+  }
 }
 function onCancelBtnClick(e) {
   e.preventDefault();
