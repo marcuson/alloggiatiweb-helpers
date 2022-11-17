@@ -1,3 +1,15 @@
+# [1.2.0](https://github.com/marcuson/alloggiatiweb-helpers/compare/1.1.0...1.2.0) (2022-11-17)
+
+
+### Bug Fixes
+
+* Add proper license. ([f75ff77](https://github.com/marcuson/alloggiatiweb-helpers/commit/f75ff77e3cd49f1c0a2d85a18cf080396e8b0eb1))
+
+
+### Features
+
+* Add import/export. ([12f6d27](https://github.com/marcuson/alloggiatiweb-helpers/commit/12f6d27f00c89b3d511d5bf99483ebf4f7aa9b4e))
+
 # [1.1.0](https://github.com/marcuson/alloggiatiweb-helpers/compare/1.0.0...1.1.0) (2022-11-16)
 
 
