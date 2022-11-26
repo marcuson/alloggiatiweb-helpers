@@ -119,6 +119,8 @@ function writeOptionsIntoInputs() {
       codeInputs[x][y].value = panelOptions.codes[x][y];
     }
   }
+
+  ocrSpaceApiKeyInput.value = panelOptions.ocrSpaceApiKey;
 }
 
 function onCancelBtnClick(e: Event) {
