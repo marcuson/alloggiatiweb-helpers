@@ -4,7 +4,7 @@
 // @namespace   marcuson
 // @description Helpers for Alloggiati Web.
 // @match       https://alloggiatiweb.poliziadistato.it/AlloggiatiWeb/SecurityCODS.aspx
-// @version     1.2.0
+// @version     1.2.1
 // @author      marcuson
 // @license     GPL-3.0-or-later
 // @downloadURL https://github.com/marcuson/alloggiatiweb-helpers/raw/gh-pages/index.user.js
@@ -161,6 +161,7 @@ function writeOptionsIntoInputs() {
       codeInputs[x][y].value = panelOptions.codes[x][y];
     }
   }
+  ocrSpaceApiKeyInput.value = panelOptions.ocrSpaceApiKey;
 }
 function onCancelBtnClick(e) {
   e.preventDefault();
