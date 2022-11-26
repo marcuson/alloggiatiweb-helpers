@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/marcuson/alloggiatiweb-helpers/compare/1.2.0...1.2.1) (2022-11-26)
+
+
+### Bug Fixes
+
+* Populate OCR Space API key on import. ([9ee18e0](https://github.com/marcuson/alloggiatiweb-helpers/commit/9ee18e0fae85bd7e1d0751962af322fb391775b6))
+
 # [1.2.0](https://github.com/marcuson/alloggiatiweb-helpers/compare/1.1.0...1.2.0) (2022-11-17)
 
 
